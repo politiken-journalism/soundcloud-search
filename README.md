@@ -44,7 +44,7 @@ EXAMPLE
     export SC_CLIENT_ID="..."
     soundcloud-search -o results/tracks.ndjson \
       <(cat data/plays.csv | \
-        csv-parser --seperator=";" | \
+        csv-parser --separator=";" | \
         jq -r '.artist + " - " + .track' \
       )
 ```

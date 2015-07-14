@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "CLI to query Soundcloud for tracks matching a given query",
   "bin": {
-    "soundcloud-tracks": "./cli.js"
+    "soundcloud-search": "./cli.js"
   },
   "keywords": [
     "cli",

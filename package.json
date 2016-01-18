@@ -1,6 +1,6 @@
 {
   "name": "soundcloud-search",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "CLI to query Soundcloud for tracks matching a given query",
   "bin": {
     "soundcloud-search": "./cli.js"

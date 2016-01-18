@@ -6,6 +6,7 @@ var concat = require('concat-stream')
 var split = require('split')
 var ndjson = require('ndjson')
 var fs = require('fs')
+var pump = require('pump')
 var prompt = require('inquirer').prompt
 
 var createApiStream = require('./lib/api-stream')
@@ -39,26 +40,27 @@ if (!SC_CLIENT_ID) {
 }
 
 var pendingQueries = []
-fs.createReadStream(inputFile)
-  .pipe(split())
-  .pipe(Transform({
+pump(
+  fs.createReadStream(inputFile),
+  split(),
+  Transform({
     objectMode: true,
     transform (query, enc, cb) {
       pendingQueries.push(query.toString('utf8'))
       this.push({q: query.toString('utf8')})
       cb()
     }
-  }))
-  .pipe(createApiStream('https://api.soundcloud.com/tracks?client_id=' + SC_CLIENT_ID + '{&q}'))
-  .pipe(concatResponse(pendingQueries))
-  .pipe(listOptions())
-  .pipe(ndjson.serialize())
-  .pipe(fs.createWriteStream(outputFile))
+  }),
+  createApiStream('https://api.soundcloud.com/tracks?client_id=' + SC_CLIENT_ID + '{&q}'),
+  concatResponse(pendingQueries),
+  listOptions(),
+  ndjson.serialize(),
+  fs.createWriteStream(outputFile)
+)
 
 function concatResponse (queryQueue) {
   return Transform({
     objectMode: true,
-    highwaterMark: 1,
     transform (req, enc, cb) {
       var self = this
       req.pipe(concat(function (body) {
@@ -72,6 +74,7 @@ function concatResponse (queryQueue) {
           cb(ex)
         }
       }))
+      .on('error', cb)
     }
   })
 }
@@ -79,8 +82,10 @@ function concatResponse (queryQueue) {
 function listOptions () {
   return Transform({
     objectMode: true,
+    highWaterMark: 1,
     transform (results, enc, cb) {
       var self = this
+
       prompt([{
         type: 'list',
         name: 'q',
